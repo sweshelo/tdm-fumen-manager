@@ -5,9 +5,9 @@
 #include <string>
 #include <dirent.h>
 #include <jansson.h>
-#include <citro2d.h>
 #include "fs.hpp"
-#include "songs.hpp"
+//#include "songs.hpp"
+#include "gui.hpp"
 
 #include <3ds.h>
 
@@ -165,6 +165,9 @@ int main()
 
   consoleInit(GFX_BOTTOM,NULL);
 
+  gui gui;
+  gui.init();
+
   //作業用ディレクトリチェック
   mkdir("sdmc:/3ds/tdm", 0777);
   mkdir("sdmc:/luma/", 0777);
@@ -194,6 +197,7 @@ int main()
     if (kDown & KEY_START)
       break; // break in order to return to hbmenu
 
+    gui.draw(songs.songs);
   }
 
   // Exit services

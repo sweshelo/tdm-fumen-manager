@@ -11,11 +11,16 @@ void songlist::load_availsonglist()
   if( songlist::json == NULL )
     songlist::file_open();
 
-
   size_t array_size = json_array_size(songlist::json);
   for( int i = 0 ; i < array_size ; i ++ ){
-    std::string name = json_string_value(json_object_get(json_array_get(songlist::json, i), "dir"));
-    std::cout << name << std::endl;
+    std::string id = json_string_value(json_object_get(json_array_get(songlist::json, i), "dir"));
+    std::string title = json_string_value(json_object_get(json_array_get(songlist::json, i), "title"));
+
+    song song;
+    song.title = title;
+    song.id = id;
+
+    songlist::songs.push_back(song);
   }
 
 };
