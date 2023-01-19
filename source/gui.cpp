@@ -1,6 +1,6 @@
 #include "gui.hpp"
 
-void gui::init()
+gui::gui()
 {
   gui::gBuffer = C2D_TextBufNew(4096);
 
@@ -12,33 +12,62 @@ void gui::init()
   gui::top = C2D_CreateScreenTarget(GFX_TOP, GFX_LEFT);
 };
 
-void gui::draw(std::vector<song>& songs)
+void gui::set_songlist(std::vector<song>& songlist)
+{
+  gui::songlist = songlist;
+}
+
+void gui::draw()
 {
   C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
   C2D_TargetClear(top, C2D_Color32(0x68, 0xB0, 0xD8, 0xFF));
   C2D_SceneBegin(top);
 
-  size_t array_size = songs.size();
+  switch(gui::status){
+    case 0:
+      select_download_song();
+    case 1:
+      select_overwrite_song();
+  }
+
+  C3D_FrameEnd(0);
+};
+
+void gui::select_download_song()
+{
+  u32 blue = C2D_Color32f(0.0f,0.0f,1.0f,1.0f);
+  u32 black = C2D_Color32f(0.0f,0.0f,0.0f,1.0f);
+
+  size_t array_size = gui::songlist.size();
   C2D_Text empty_string;
 
-  std::cout << songs.size() << std::endl;
-  std::cout << gui::gSongtitleText.size() << std::endl;
-
-  for(int i; i<array_size; i++){
+  for(int i = 0; i<array_size; i++){
 
     char buf[100];
 
     // string copy
     if(gui::gSongtitleText.size() <= i){
       gui::gSongtitleText.push_back(empty_string);
+      snprintf(buf, sizeof(buf), "%s", gui::songlist[i].title.c_str());
+      C2D_TextParse(&(gui::gSongtitleText[i]), gui::gBuffer, buf);
+      C2D_TextOptimize(&(gui::gSongtitleText[i]));
     }
 
     // draw
-    snprintf(buf, sizeof(buf), "%s", songs[i].title.c_str());
-    C2D_TextParse(&(gui::gSongtitleText[i]), gui::gBuffer, buf);
-    C2D_TextOptimize(&(gui::gSongtitleText[i]));
-    C2D_DrawText(&(gui::gSongtitleText[i]), 0, 8.0f, float(i * 16.0f), 0.5f, 0.5f, 0.5f);
+    C2D_DrawText(&(gui::gSongtitleText[i]), C2D_WithColor, 8.0f, float(i * 16.0f), 0.5f, 0.5f, 0.5f, (i == gui::cursor) ? blue : black);
   }
+};
 
-  C3D_FrameEnd(0);
+void gui::select_overwrite_song()
+{
+  return;
+}
+
+void gui::key_handle(u32 key)
+{
+  if ( key & KEY_DDOWN )
+    gui::cursor = ( gui::cursor+1 >= gui::gSongtitleText.size()) ? gui::gSongtitleText.size() : gui::cursor+1;
+  if ( key & KEY_DUP )
+    gui::cursor = ( gui::cursor-1 < 0 ) ? 0 : gui::cursor-1;
+  return;
 };

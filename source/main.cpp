@@ -165,9 +165,6 @@ int main()
 
   consoleInit(GFX_BOTTOM,NULL);
 
-  gui gui;
-  gui.init();
-
   //作業用ディレクトリチェック
   mkdir("sdmc:/3ds/tdm", 0777);
   mkdir("sdmc:/luma/", 0777);
@@ -178,12 +175,15 @@ int main()
   mkdir("sdmc:/luma/titles/0004000000190E00/romfs/_data/fumen", 0777);
   mkdir("sdmc:/luma/titles/0004000000190E00/romfs/_data/sound", 0777);
 
-  //ret=http_download("https://sweshelo.jp/tdm/release.json", "sdmc:/3ds/tdm/release.json");
-  //printf("return from http_download: %" PRId32 "\n",ret);
+  ret=http_download("https://sweshelo.jp/tdm/release.json", "sdmc:/3ds/tdm/release.json");
+  printf("return from http_download: %" PRId32 "\n",ret);
 
   songlist songs;
   songs.file_open();
   songs.load_availsonglist();
+
+  gui gui;
+  gui.set_songlist(songs.songs);
 
   // Main loop
   while (aptMainLoop())
@@ -191,13 +191,12 @@ int main()
     gspWaitForVBlank();
     hidScanInput();
 
-    // Your code goes here
-
     u32 kDown = hidKeysDown();
     if (kDown & KEY_START)
       break; // break in order to return to hbmenu
 
-    gui.draw(songs.songs);
+    gui.draw();
+    if (kDown) gui.key_handle(kDown);
   }
 
   // Exit services
