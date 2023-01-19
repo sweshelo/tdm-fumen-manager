@@ -1,0 +1,94 @@
+{
+  "list": [
+    {
+      "genre": "Anime",
+      "songs":[
+        {
+          "name": "人生ドラマチック",
+          "id": "ywjdrm",
+          "song": "ywjdrm_remst_3ds"
+        },
+        {
+          "name": "ようかい体操第一",
+          "id": "yokait",
+          "song": "yokait_remst_3ds"
+        },
+        {
+          "name": "我ら思う、故に我ら在り",
+          "id": "kr5st2",
+          "song": "kr5st2_3ds"
+        },
+        {
+          "name": "Hard Knock Days",
+          "id": "hkdays",
+          "song": "hkdays_3ds"
+        },
+        {
+          "name": "ころころここたま！",
+          "id": "krkrkk",
+          "song": "krkrkk_3ds"
+        },
+        {
+          "name": "XY&Z",
+          "id": "pkxyz",
+          "song": "pkxyz_3ds"
+        },
+        {
+          "name": "ウンタカダンス",
+          "id": "untaka",
+          "song": "untaka_3ds"
+        },
+        {
+          "name": "海の見える街",
+          "id": "majotk",
+          "song": "majotk_3ds"
+        },
+        {
+          "name": "QUESTION",
+          "id": "ansa23",
+          "song": "ansa23_3ds"
+        }
+      ]
+    },
+    {
+      "genre": "J-POP",
+      "songs":[
+        {
+          "name": "ないものねだり",
+          "id": "nedari",
+          "song": "nedari_3ds"
+        },
+        {
+          "name": "光るなら",
+          "id": "kimuso",
+          "song": "kimuso_3ds"
+        },
+        {
+          "name": "私以外私じゃないの",
+          "id": "geswat",
+          "song": "geswat_3ds"
+        },
+        {
+          "name": "シュガーソングとビターステップ",
+          "id": "kekka2",
+          "song": "kekka2_3ds"
+        },
+        {
+          "name": "ひまわりの約束",
+          "id": "himyak",
+          "song": "himyak_remst_3ds"
+        },
+        {
+          "name": "360°",
+          "id": "dora36",
+          "song": "dora36_3ds"
+        },
+        {
+          "name": "恋音と雨空",
+          "id": "koiama",
+          "song": "koiama_remst_3ds"
+        }
+      ]
+    }
+  ]
+}
