@@ -6,7 +6,6 @@
 #include <dirent.h>
 #include <jansson.h>
 #include "fs.hpp"
-//#include "songs.hpp"
 #include "gui.hpp"
 
 #include <3ds.h>
@@ -178,11 +177,11 @@ int main()
   ret=http_download("https://sweshelo.jp/tdm/release.json", "sdmc:/3ds/tdm/release.json");
   printf("return from http_download: %" PRId32 "\n",ret);
 
-  songlist songs;
+  Remote_songlist songs;
   songs.file_open();
   songs.load_availsonglist();
 
-  gui gui;
+  Gui gui;
   gui.set_songlist(songs.songs);
 
   // Main loop

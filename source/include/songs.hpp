@@ -3,19 +3,24 @@
 #include <vector>
 #include <jansson.h>
 
-class song
+class Song
 {
   public:
     std::string title;
     std::string id;
 };
 
-class songlist
+class Remote_songlist
 {
   public:
     json_t* json;
     json_error_t error_json;
-    std::vector<song> songs;
+    std::vector<Song> songs;
     void file_open(void);
     void load_availsonglist(void);
+};
+
+class Local_songlist
+{
+
 };
