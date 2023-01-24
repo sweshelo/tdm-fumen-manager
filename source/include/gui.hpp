@@ -1,7 +1,9 @@
 #include <citro2d.h>
 #include <vector>
 #include <string>
+#include <dirent.h>
 #include "songs.hpp"
+#include "util.hpp"
 
 class Gui
 {
@@ -10,6 +12,7 @@ class Gui
     std::vector<C2D_Text> gSongtitleText;
     std::vector<C2D_Text> guideText;
     std::vector<Song> _songlist;
+    std::vector<Song> stocksonglist;
     std::vector<Song>& songlist = _songlist;
     C3D_RenderTarget* top;
     int cursor = 0;

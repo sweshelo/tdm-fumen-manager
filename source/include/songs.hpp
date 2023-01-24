@@ -8,6 +8,7 @@ class Song
   public:
     std::string title;
     std::string id;
+    std::string song = "";
 };
 
 class Remote_songlist
@@ -18,9 +19,4 @@ class Remote_songlist
     std::vector<Song> songs;
     void file_open(void);
     void load_availsonglist(void);
-};
-
-class Local_songlist
-{
-
 };

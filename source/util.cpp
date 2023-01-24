@@ -1,136 +1,235 @@
 #include "util.hpp"
 
-Result http_download(const char *url, string location)
+#define USER_AGENT "TDMManager/0.0.0"
+
+static char *result_buf = nullptr;
+static size_t result_sz = 0;
+static size_t result_written = 0;
+
+#define TIME_IN_US 1
+#define TIMETYPE curl_off_t
+#define TIMEOPT CURLINFO_TOTAL_TIME_T
+#define MINIMAL_PROGRESS_FUNCTIONALITY_INTERVAL	3000000
+
+curl_off_t downloadTotal = 1; // Dont initialize with 0 to avoid division by zero later.
+curl_off_t downloadNow = 0;
+curl_off_t downloadSpeed = 0;
+
+static FILE *downfile = nullptr;
+static size_t file_buffer_pos = 0;
+static size_t file_toCommit_size = 0;
+static char *g_buffers[2] = { nullptr };
+static u8 g_index = 0;
+static Thread fsCommitThread;
+static LightEvent readyToCommit;
+static LightEvent waitCommit;
+static bool killThread = false;
+static bool writeError = false;
+#define FILE_ALLOC_SIZE 0x60000
+CURL *CurlHandle = nullptr;
+
+
+static int curlProgress(CURL *hnd,
+    curl_off_t dltotal, curl_off_t dlnow,
+    curl_off_t ultotal, curl_off_t ulnow)
 {
-  Result ret=0;
-  httpcContext context;
-  char *newurl=NULL;
-  u32 statuscode=0;
-  u32 contentsize=0, readsize=0, size=0;
-  u8 *buf, *lastbuf;
-  fs out;
-
-  do {
-    ret = httpcOpenContext(&context, HTTPC_METHOD_GET, url, 1);
-
-    // This disables SSL cert verification, so https:// will be usable
-    ret = httpcSetSSLOpt(&context, SSLCOPT_DisableVerify);
-
-    // Enable Keep-Alive connections
-    ret = httpcSetKeepAlive(&context, HTTPC_KEEPALIVE_ENABLED);
-
-    // Set a User-Agent header so websites can identify your application
-    ret = httpcAddRequestHeaderField(&context, "User-Agent", "TDMManager/0.0.0");
-
-    // Tell the server we can support Keep-Alive connections.
-    // This will delay connection teardown momentarily (typically 5s)
-    // in case there is another request made to the same server.
-    ret = httpcAddRequestHeaderField(&context, "Connection", "Keep-Alive");
-
-    ret = httpcBeginRequest(&context);
-    if(ret!=0){
-      httpcCloseContext(&context);
-      if(newurl!=NULL) free(newurl);
-      return ret;
-    }
-
-    ret = httpcGetResponseStatusCode(&context, &statuscode);
-    if(ret!=0){
-      httpcCloseContext(&context);
-      if(newurl!=NULL) free(newurl);
-      return ret;
-    }
-
-    if ((statuscode >= 301 && statuscode <= 303) || (statuscode >= 307 && statuscode <= 308)) {
-      if(newurl==NULL) newurl = (char*)malloc(0x1000); // One 4K page for new URL
-      if (newurl==NULL){
-        httpcCloseContext(&context);
-        return -1;
-      }
-      ret = httpcGetResponseHeader(&context, "Location", newurl, 0x1000);
-      url = newurl; // Change pointer to the url that we just learned
-      httpcCloseContext(&context); // Close this context before we try the next
-    }
-  } while ((statuscode >= 301 && statuscode <= 303) || (statuscode >= 307 && statuscode <= 308));
-
-  if(statuscode!=200){
-    httpcCloseContext(&context);
-    if(newurl!=NULL) free(newurl);
-    return -2;
-  }
-
-  // This relies on an optional Content-Length header and may be 0
-  ret=httpcGetDownloadSizeState(&context, NULL, &contentsize);
-  if(ret!=0){
-    httpcCloseContext(&context);
-    if(newurl!=NULL) free(newurl);
-    return ret;
-  }
-
-
-  // Start with a single page buffer
-  buf = (u8*)malloc(0x1000);
-  if(buf==NULL){
-    httpcCloseContext(&context);
-    if(newurl!=NULL) free(newurl);
-    return -1;
-  }
-
-  out.openfile(location);
-
-  do {
-    // This download loop resizes the buffer as data is read.
-    ret = httpcDownloadData(&context, buf+size, 0x1000, &readsize);
-    size += readsize;
-    if (ret == (s32)HTTPC_RESULTCODE_DOWNLOADPENDING){
-      lastbuf = buf; // Save the old pointer, in case realloc() fails.
-      buf = (u8*)realloc(buf, size + 0x1000);
-      if(buf==NULL){
-        httpcCloseContext(&context);
-        free(lastbuf);
-        if(newurl!=NULL) free(newurl);
-        return -1;
-      }
-    }
-    out.writefile((const char*)buf, (size_t)readsize);
-  } while (ret == (s32)HTTPC_RESULTCODE_DOWNLOADPENDING);	
-
-  out.closefile();
-
-  if(ret!=0){
-    httpcCloseContext(&context);
-    if(newurl!=NULL) free(newurl);
-    free(buf);
-    return -1;
-  }
-
-  // Resize the buffer back down to our actual final size
-  lastbuf = buf;
-  buf = (u8*)realloc(buf, size);
-  if(buf==NULL){ // realloc() failed.
-    httpcCloseContext(&context);
-    free(lastbuf);
-    if(newurl!=NULL) free(newurl);
-    return -1;
-  }
-
-  httpcCloseContext(&context);
-  free(buf);
-  if (newurl!=NULL) free(newurl);
+  downloadTotal = dltotal;
+  downloadNow = dlnow;
 
   return 0;
 }
 
-void load_songlist() {
+bool filecommit() {
+  if (!downfile) return false;
+  fseek(downfile, 0, SEEK_END);
+  u32 byteswritten = fwrite(g_buffers[!g_index], 1, file_toCommit_size, downfile);
+  if (byteswritten != file_toCommit_size) return false;
+  file_toCommit_size = 0;
+  return true;
+}
 
-  json_t *json;
-  json_error_t error_json;
+static void commitToFileThreadFunc(void *args) {
+  LightEvent_Signal(&waitCommit);
 
-  json = json_load_file("romfs:/list.json", 0, &error_json);
-  printf("address: %x\n", json);
-  printf("Song ID: %s\n", json_string_value(json_object_get(json_array_get(json_object_get(json_array_get(json_object_get(json, "list"), 0), "songs"), 0), "id")));
+  while (true) {
+    LightEvent_Wait(&readyToCommit);
+    LightEvent_Clear(&readyToCommit);
+    if (killThread) threadExit(0);
+    writeError = !filecommit();
+    LightEvent_Signal(&waitCommit);
+  }
+}
 
-  json_decref(json);
+static size_t file_handle_data(char *ptr, size_t size, size_t nmemb, void *userdata) {
+  //if (getAvailableSpace() < (u64)downloadTotal) return 0; // Out of space.
+  if (writeError) return 0;
+  //if (QueueSystem::CancelCallback) return 0;
+
+  (void)userdata;
+  const size_t bsz = size * nmemb;
+  size_t tofill = 0;
+
+
+  if (!g_buffers[g_index]) {
+    LightEvent_Init(&waitCommit, RESET_STICKY);
+    LightEvent_Init(&readyToCommit, RESET_STICKY);
+
+    s32 prio = 0;
+    svcGetThreadPriority(&prio, CUR_THREAD_HANDLE);
+    fsCommitThread = threadCreate(commitToFileThreadFunc, NULL, 0x1000, prio - 1, -2, true);
+
+    g_buffers[0] = (char*)memalign(0x1000, FILE_ALLOC_SIZE);
+    g_buffers[1] = (char*)memalign(0x1000, FILE_ALLOC_SIZE);
+
+    if (!fsCommitThread || !g_buffers[0] || !g_buffers[1]) return 0;
+  }
+
+  if (file_buffer_pos + bsz >= FILE_ALLOC_SIZE) {
+    tofill = FILE_ALLOC_SIZE - file_buffer_pos;
+    memcpy(g_buffers[g_index] + file_buffer_pos, ptr, tofill);
+
+    LightEvent_Wait(&waitCommit);
+    LightEvent_Clear(&waitCommit);
+    file_toCommit_size = file_buffer_pos + tofill;
+    file_buffer_pos = 0;
+    svcFlushProcessDataCache(CUR_PROCESS_HANDLE, (u32)g_buffers[g_index], file_toCommit_size);
+    g_index = !g_index;
+    LightEvent_Signal(&readyToCommit);
+  }
+
+  memcpy(g_buffers[g_index] + file_buffer_pos, ptr + tofill, bsz - tofill);
+  file_buffer_pos += bsz - tofill;
+  return bsz;
+}
+
+
+/*
+   Download a file.
+   const std::string &url: The download URL.
+   const std::string &path: Where to place the file.
+   */
+Result downloadToFile(const std::string &url, const std::string &path) {
+  bool needToDelete = false;
+  downloadTotal = 1;
+  downloadNow = 0;
+  downloadSpeed = 0;
+
+  CURLcode curlResult;
+  Result retcode = 0;
+  int res;
+
+  printf("Downloading from:\n%s\nto:\n%s\n", url.c_str(), path.c_str());
+
+  void *socubuf = memalign(0x1000, 0x100000);
+  if (!socubuf) {
+    retcode = -1;
+    goto exit;
+  }
+
+  res = socInit((u32 *)socubuf, 0x100000);
+  if (R_FAILED(res)) {
+    retcode = res;
+    goto exit;
+  }
+
+  /* make directories. */
+  for (char *slashpos = strchr(path.c_str() + 1, '/'); slashpos != NULL; slashpos = strchr(slashpos + 1, '/')) {
+    char bak = *(slashpos);
+    *(slashpos) = '\0';
+
+    mkdir(path.c_str(), 0777);
+
+    *(slashpos) = bak;
+  }
+
+  downfile = fopen(path.c_str(), "wb");
+  if (!downfile) {
+    retcode = -2;
+    goto exit;
+  }
+
+  CurlHandle = curl_easy_init();
+  curl_easy_setopt(CurlHandle, CURLOPT_BUFFERSIZE, FILE_ALLOC_SIZE);
+  curl_easy_setopt(CurlHandle, CURLOPT_URL, url.c_str());
+  curl_easy_setopt(CurlHandle, CURLOPT_NOPROGRESS, 0L);
+  curl_easy_setopt(CurlHandle, CURLOPT_USERAGENT, USER_AGENT);
+  curl_easy_setopt(CurlHandle, CURLOPT_FOLLOWLOCATION, 1L);
+  curl_easy_setopt(CurlHandle, CURLOPT_FAILONERROR, 1L);
+  curl_easy_setopt(CurlHandle, CURLOPT_ACCEPT_ENCODING, "gzip");
+  curl_easy_setopt(CurlHandle, CURLOPT_MAXREDIRS, 50L);
+  curl_easy_setopt(CurlHandle, CURLOPT_XFERINFOFUNCTION, curlProgress);
+  curl_easy_setopt(CurlHandle, CURLOPT_HTTP_VERSION, (long)CURL_HTTP_VERSION_2TLS);
+  curl_easy_setopt(CurlHandle, CURLOPT_WRITEFUNCTION, file_handle_data);
+  curl_easy_setopt(CurlHandle, CURLOPT_SSL_VERIFYPEER, 0L);
+  curl_easy_setopt(CurlHandle, CURLOPT_VERBOSE, 1L);
+  curl_easy_setopt(CurlHandle, CURLOPT_STDERR, stdout);
+
+  curlResult = curl_easy_perform(CurlHandle);
+  curl_easy_cleanup(CurlHandle);
+  CurlHandle = nullptr;
+
+  if (curlResult != CURLE_OK) {
+    retcode = -curlResult;
+    needToDelete = true;
+    goto exit;
+  }
+
+  LightEvent_Wait(&waitCommit);
+  LightEvent_Clear(&waitCommit);
+
+  file_toCommit_size = file_buffer_pos;
+  svcFlushProcessDataCache(CUR_PROCESS_HANDLE, (u32)g_buffers[g_index], file_toCommit_size);
+  g_index = !g_index;
+
+  if (!filecommit()) {
+    retcode = -3;
+    needToDelete = true;
+    goto exit;
+  }
+
+  fflush(downfile);
+
+exit:
+  if (fsCommitThread) {
+    killThread = true;
+    LightEvent_Signal(&readyToCommit);
+    threadJoin(fsCommitThread, U64_MAX);
+    killThread = false;
+    fsCommitThread = nullptr;
+  }
+
+  socExit();
+
+  if (socubuf) free(socubuf);
+
+  if (downfile) {
+    fclose(downfile);
+    downfile = nullptr;
+  }
+
+  if (g_buffers[0]) {
+    free(g_buffers[0]);
+    g_buffers[0] = nullptr;
+  }
+
+  if (g_buffers[1]) {
+    free(g_buffers[1]);
+    g_buffers[1] = nullptr;
+  }
+
+  g_index = 0;
+  file_buffer_pos = 0;
+  file_toCommit_size = 0;
+  writeError = false;
+
+  /*
+     if (needToDelete) {
+     if (access(path.c_str(), F_OK) == 0) deleteFile(path.c_str()); // Delete file, cause not fully downloaded.
+     }
+     */
+
+  //if (QueueSystem::CancelCallback) return 0;
+  return retcode;
 }
 
 void quitwait(){

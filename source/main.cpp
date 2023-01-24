@@ -25,8 +25,9 @@ int main()
   mkdir("sdmc:/luma/titles/0004000000190E00/romfs/_data", 0777);
   mkdir("sdmc:/luma/titles/0004000000190E00/romfs/_data/fumen", 0777);
   mkdir("sdmc:/luma/titles/0004000000190E00/romfs/_data/sound", 0777);
+  mkdir("sdmc:/luma/titles/0004000000190E00/romfs/_data/sound/song", 0777);
 
-  ret=http_download("https://sweshelo.jp/tdm/release.json", "sdmc:/3ds/tdm/release.json");
+  ret=downloadToFile("https://sweshelo.jp/tdm/release.json", "sdmc:/3ds/tdm/release.json");
   printf("return from http_download: %" PRId32 "\n",ret);
 
   Remote_songlist songs;
