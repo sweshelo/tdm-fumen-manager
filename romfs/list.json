@@ -4,47 +4,47 @@
       "genre": "Anime",
       "songs":[
         {
-          "name": "人生ドラマチック",
+          "title": "人生ドラマチック",
           "id": "ywjdrm",
           "song": "ywjdrm_remst_3ds"
         },
         {
-          "name": "ようかい体操第一",
+          "title": "ようかい体操第一",
           "id": "yokait",
           "song": "yokait_remst_3ds"
         },
         {
-          "name": "我ら思う、故に我ら在り",
+          "title": "我ら思う、故に我ら在り",
           "id": "kr5st2",
           "song": "kr5st2_3ds"
         },
         {
-          "name": "Hard Knock Days",
+          "title": "Hard Knock Days",
           "id": "hkdays",
           "song": "hkdays_3ds"
         },
         {
-          "name": "ころころここたま！",
+          "title": "ころころここたま！",
           "id": "krkrkk",
           "song": "krkrkk_3ds"
         },
         {
-          "name": "XY&Z",
+          "title": "XY&Z",
           "id": "pkxyz",
           "song": "pkxyz_3ds"
         },
         {
-          "name": "ウンタカダンス",
+          "title": "ウンタカダンス",
           "id": "untaka",
           "song": "untaka_3ds"
         },
         {
-          "name": "海の見える街",
+          "title": "海の見える街",
           "id": "majotk",
           "song": "majotk_3ds"
         },
         {
-          "name": "QUESTION",
+          "title": "QUESTION",
           "id": "ansa23",
           "song": "ansa23_3ds"
         }
@@ -54,37 +54,37 @@
       "genre": "J-POP",
       "songs":[
         {
-          "name": "ないものねだり",
+          "title": "ないものねだり",
           "id": "nedari",
           "song": "nedari_3ds"
         },
         {
-          "name": "光るなら",
+          "title": "光るなら",
           "id": "kimuso",
           "song": "kimuso_3ds"
         },
         {
-          "name": "私以外私じゃないの",
+          "title": "私以外私じゃないの",
           "id": "geswat",
           "song": "geswat_3ds"
         },
         {
-          "name": "シュガーソングとビターステップ",
+          "title": "シュガーソングとビターステップ",
           "id": "kekka2",
           "song": "kekka2_3ds"
         },
         {
-          "name": "ひまわりの約束",
+          "title": "ひまわりの約束",
           "id": "himyak",
           "song": "himyak_remst_3ds"
         },
         {
-          "name": "360°",
+          "title": "360°",
           "id": "dora36",
           "song": "dora36_3ds"
         },
         {
-          "name": "恋音と雨空",
+          "title": "恋音と雨空",
           "id": "koiama",
           "song": "koiama_remst_3ds"
         }
