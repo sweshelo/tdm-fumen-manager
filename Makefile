@@ -31,6 +31,10 @@ include $(DEVKITARM)/3ds_rules
 #     - icon.png
 #     - <libctru folder>/default_icon.png
 #---------------------------------------------------------------------------------
+APP_TITLE	=	TDM Fumen manager
+APP_DESCRIPTION	=	既存の楽曲を別の楽曲に置換します
+APP_AUTHOR	=	Sweshelo
+
 TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
 SOURCES		:=	source
