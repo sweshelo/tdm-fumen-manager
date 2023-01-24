@@ -51,6 +51,9 @@ void Gui::draw()
     case 1:
       select_overwrite_song();
       break;
+    case 2:
+      download();
+      break;
   }
 
   C3D_FrameEnd(0);
@@ -154,25 +157,33 @@ void Gui::key_handle(u32 key)
 
       case 1:
         {
-          std::string ROMFS_PATH="sdmc:/luma/titles/0004000000190E00/romfs/_data/";
-          Song owsong = Gui::stocksonglist[ Gui::cursor + Gui::page * 12 ];
-          std::cout << Gui::songid_download << " -> " << owsong.id << std::endl;
-
-          // Downloads
-          std::string path = ROMFS_PATH + "fumen/" + owsong.id + "/";
-          mkdir(path.c_str(), 0777);
-          mkdir((path + "solo/").c_str(), 0777);
-          std::cout << ("https://sweshelo.jp/tdm/" + owsong.id + "/fumen.bin").c_str() << std::endl;
-          std::cout << downloadToFile(("https://sweshelo.jp/tdm/" + Gui::songid_download + "/!!fumen.bin").c_str() , (path + "solo/" + owsong.id + "_m.bin").c_str()) << std::endl;
-          std::cout << downloadToFile(("https://sweshelo.jp/tdm/" + Gui::songid_download + "/!!audio.naac").c_str() , (ROMFS_PATH + "sound/song/" + owsong.song + ".naac").c_str()) << std::endl;
-          std::cout << downloadToFile(("https://sweshelo.jp/tdm/" + Gui::songid_download + "/!!audio_s.naac").c_str() , (ROMFS_PATH + "sound/song/" + owsong.song + "_s.naac").c_str()) << std::endl;
-
-          Gui::page = 0;
-          Gui::cursor = 0;
-          Gui::status = 0;
+          Gui::status = 2;
         }
         break;
     }
   }
   return;
 };
+
+void Gui::download(){
+  C2D_DrawText(&(Gui::guideText[Gui::status]), C2D_WithColor | C2D_AlignJustified, 8.0f, 0.0f, 0.5f, 0.5f, 0.5f, Gui::black);
+  C3D_FrameEnd(0);
+
+  std::string ROMFS_PATH="sdmc:/luma/titles/0004000000190E00/romfs/_data/";
+  Song owsong = Gui::stocksonglist[ Gui::cursor + Gui::page * 12 ];
+  std::cout << Gui::songid_download << " -> " << owsong.id << std::endl;
+
+  // Downloads
+  std::string path = ROMFS_PATH + "fumen/" + owsong.id + "/";
+  mkdir(path.c_str(), 0777);
+  mkdir((path + "solo/").c_str(), 0777);
+  std::cout << ("https://sweshelo.jp/tdm/" + owsong.id + "/fumen.bin").c_str() << std::endl;
+  std::cout << downloadToFile(("https://sweshelo.jp/tdm/" + Gui::songid_download + "/!!fumen.bin").c_str() , (path + "solo/" + owsong.id + "_m.bin").c_str()) << std::endl;
+  std::cout << downloadToFile(("https://sweshelo.jp/tdm/" + Gui::songid_download + "/!!audio.naac").c_str() , (ROMFS_PATH + "sound/song/" + owsong.song + ".naac").c_str()) << std::endl;
+  std::cout << downloadToFile(("https://sweshelo.jp/tdm/" + Gui::songid_download + "/!!audio_s.naac").c_str() , (ROMFS_PATH + "sound/song/" + owsong.song + "_s.naac").c_str()) << std::endl;
+
+  Gui::page = 0;
+  Gui::cursor = 0;
+  Gui::status = 0;
+  Gui::set_songlist(Gui::songlist);
+}

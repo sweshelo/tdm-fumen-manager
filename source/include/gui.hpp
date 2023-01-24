@@ -23,6 +23,7 @@ class Gui
     std::string songid_overwrite = "";
     void select_download_song(void);
     void select_overwrite_song(void);
+    void download(void);
     std::string navigate[5] = {
       "ダウンロードする楽曲を選択します",
       "上書きする楽曲を選択します",

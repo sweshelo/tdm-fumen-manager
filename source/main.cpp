@@ -14,7 +14,7 @@ int main()
   httpcInit(0); // Buffer size when POST/PUT.
   romfsInit();
 
-  consoleInit(GFX_BOTTOM,NULL);
+  //consoleInit(GFX_BOTTOM,NULL);
 
   //作業用ディレクトリチェック
   mkdir("sdmc:/3ds/tdm", 0777);
