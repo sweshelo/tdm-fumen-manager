@@ -14,7 +14,7 @@ int main()
   httpcInit(0); // Buffer size when POST/PUT.
   romfsInit();
 
-  consoleInit(GFX_BOTTOM,NULL);
+  //consoleInit(GFX_BOTTOM,NULL);
 
   //作業用ディレクトリチェック
   mkdir("sdmc:/luma/titles/0004000000190E00/romfs/_data/fumen", 0777);
