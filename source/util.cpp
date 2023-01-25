@@ -1,4 +1,6 @@
 #include "util.hpp"
+#include <fstream>
+#include <sstream>
 
 #define USER_AGENT "TDMManager/0.0.0"
 
@@ -242,4 +244,16 @@ void quitwait(){
   }
   httpcExit();
   gfxExit();
+}
+
+std::string readFileIntoString(const std::string& path) {
+    auto ss = std::ostringstream{};
+    std::ifstream input_file(path);
+    if (!input_file.is_open()) {
+      std::cerr << "Could not open the file - '"
+             << path << "'" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+    ss << input_file.rdbuf();
+    return ss.str();
 }
