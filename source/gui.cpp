@@ -1,4 +1,8 @@
 #include "gui.hpp"
+#include "json.hpp"
+#include <fstream>
+
+using json = nlohmann::json;
 
 Gui::Gui()
 {
@@ -108,43 +112,28 @@ void Gui::key_handle(u32 key)
           Gui::songid_download = Gui::songlist[ Gui::cursor + Gui::page * 12 ].id;
           Gui::gSongtitleText.clear();
 
-          json_t *json, *genre, *songs, *song;
-          json_error_t error_json;
+          std::string json = readFileIntoString("romfs:/list.json");
+          auto jobj = json::parse(json);
 
-          json = json_load_file("romfs:/list.json", 0, &error_json);
-
-          //今は未使用だがジャンル分けしているので全ジャンルを統合する
-          genre = json_object_get(json, "list");
-          int genre_count = json_array_size(genre);
-          for( int i=0; i < genre_count; i++){
-            songs = json_object_get(json_array_get(genre, i), "songs");
-            int songs_count = json_array_size(songs);
-            for( int j=0; j < songs_count; j++ ){
-              // title 取り出し
-              song = json_array_get(songs, j);
-              std::string song_title = json_string_value(json_object_get(song, "title"));
-
+          for( int i = 0; i < jobj["list"].size(); i++ ){
+            std::cout << jobj["list"][i]["genre"] << " 処理中" << std::endl;
+            for ( int j = 0; j < jobj["list"][i]["songs"].size(); j++ ){
               Song _song;
-              _song.title = song_title;
-              _song.id = json_string_value(json_object_get(song, "id"));
-              _song.song = json_string_value(json_object_get(song, "song"));
+              _song.id = jobj["list"][i]["songs"][j]["id"];
+              _song.song = jobj["list"][i]["songs"][j]["song"];
+              _song.title = jobj["list"][i]["songs"][j]["title"];
 
               Gui::stocksonglist.push_back(_song);
 
-              // c2dtext push
+              // c2dtext
               char buf[100];
               C2D_Text song_title_c2d;
-              snprintf(buf, sizeof(buf), "%s", song_title.c_str());
+              snprintf(buf, sizeof(buf), "%s", _song.title.c_str());
               C2D_TextParse(&song_title_c2d, Gui::gBuffer, buf);
               C2D_TextOptimize(&song_title_c2d);
               Gui::gSongtitleText.push_back(song_title_c2d);
             }
           }
-
-          json_decref(json);
-          json_decref(genre);
-          json_decref(songs);
-          json_decref(song);
 
           Gui::status = 1;
           Gui::page = 0;

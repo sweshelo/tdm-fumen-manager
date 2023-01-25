@@ -20,3 +20,5 @@ Result downloadToFile(const std::string &url, const std::string &path);
 Result http_download(const char*, string);
 void load_songlist(void);
 void quitwait(void);
+
+std::string readFileIntoString(const string& path);

@@ -14,17 +14,10 @@ int main()
   httpcInit(0); // Buffer size when POST/PUT.
   romfsInit();
 
-  //consoleInit(GFX_BOTTOM,NULL);
+  consoleInit(GFX_BOTTOM,NULL);
 
   //作業用ディレクトリチェック
-  mkdir("sdmc:/3ds/tdm", 0777);
-  mkdir("sdmc:/luma/", 0777);
-  mkdir("sdmc:/luma/titles", 0777);
-  mkdir("sdmc:/luma/titles/0004000000190E00", 0777);
-  mkdir("sdmc:/luma/titles/0004000000190E00/romfs", 0777);
-  mkdir("sdmc:/luma/titles/0004000000190E00/romfs/_data", 0777);
   mkdir("sdmc:/luma/titles/0004000000190E00/romfs/_data/fumen", 0777);
-  mkdir("sdmc:/luma/titles/0004000000190E00/romfs/_data/sound", 0777);
   mkdir("sdmc:/luma/titles/0004000000190E00/romfs/_data/sound/song", 0777);
 
   ret=downloadToFile("https://sweshelo.jp/tdm/release.json", "sdmc:/3ds/tdm/release.json");
